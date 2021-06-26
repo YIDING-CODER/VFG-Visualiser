@@ -1,5 +1,5 @@
 # Visualise Planimation VFG using Pixi JS
-Load Planimation VFG file locally and visualised with pixi JS.
+Load Planimation VFG file locally and visualise with pixi JS.
 
 ## Run websever
 In the root folder:
