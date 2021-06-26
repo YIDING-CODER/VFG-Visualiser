@@ -1,0 +1,279 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Hello World</title>
+</head>
+<!-- Load Pixi JS -->
+<script src="pixi.min.js"></script>
+
+<!-- Used to load Json file -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+<body>
+    <script type="text/javascript">
+
+
+            // Progress function, we may use it in future
+            function loadProgressHandler(loader, resource) {
+
+//Display the file `url` currently being loaded
+console.log("loading: " + resource.url);
+
+//Display the percentage of files currently loaded
+console.log("progress: " + loader.progress + "%");
+
+//If you gave your files names as the first argument 
+//of the `add` method, you can access them like this
+//console.log("loading: " + resource.name);
+}
+        // Copied from online, used for tracking key board event.
+        function keyboard(value) {
+            let key = {};
+            key.value = value;
+            key.isDown = false;
+            key.isUp = true;
+            key.press = undefined;
+            key.release = undefined;
+            //The `downHandler`
+            key.downHandler = event => {
+                if (event.key === key.value) {
+                    if (key.isUp && key.press) key.press();
+                    key.isDown = true;
+                    key.isUp = false;
+                    event.preventDefault();
+                }
+            };
+
+            //The `upHandler`
+            key.upHandler = event => {
+                if (event.key === key.value) {
+                    if (key.isDown && key.release) key.release();
+                    key.isDown = false;
+                    key.isUp = true;
+                    event.preventDefault();
+                }
+            };
+
+            //Attach event listeners
+            const downListener = key.downHandler.bind(key);
+            const upListener = key.upHandler.bind(key);
+
+            window.addEventListener(
+                "keydown", downListener, false
+            );
+            window.addEventListener(
+                "keyup", upListener, false
+            );
+
+            // Detach event listeners
+            key.unsubscribe = () => {
+                window.removeEventListener("keydown", downListener);
+                window.removeEventListener("keyup", upListener);
+            };
+
+            return key;
+        }
+
+        // Convert RGBA color to hex value
+        function RGBAToHexA(r, g, b, a) {
+            r = Math.round(r * 255).toString(16);
+            g = Math.round(g * 255).toString(16);
+            b = Math.round(b * 255).toString(16);
+            a = Math.round(a * 255).toString(16);
+
+            if (r.length == 1)
+                r = "0" + r;
+            if (g.length == 1)
+                g = "0" + g;
+            if (b.length == 1)
+                b = "0" + b;
+            if (a.length == 1)
+                a = "0" + a;
+
+            return "0x" + r + g + b;
+        }
+
+
+
+        // Load the VFG json file, it will be returned by Planimation API later.
+        $.getJSON("images/block.vfg", function (vfg) {
+
+            // Set the canvas size
+            let width = 600, height = 600;
+            
+            //Aliases
+            let Application = PIXI.Application,
+                loader = PIXI.loader,
+                resources = PIXI.loader.resources,
+                Sprite = PIXI.Sprite;
+
+            //Create a Pixi Application
+            let app = new Application({
+                width: width,
+                height: height,
+                antialias: true,
+                transparent: true,
+                resolution: 1
+            }
+            );
+
+            // The following two line is to change the canvas origin from top left to bottom left.
+            app.stage.position.y = app.renderer.height / app.renderer.resolution;
+            app.stage.scale.y = -1;
+
+            //Add the canvas that Pixi automatically created for you to the HTML document
+            document.body.appendChild(app.view);
+
+
+            // Code to get the image texture from VFG File
+            var base64imgs = []
+            for (var i = 0; i < vfg.imageTable.m_keys.length; i++) {
+                var obj = {}
+                obj.name = vfg.imageTable.m_keys[i];
+                obj.url = "data:image/png;base64," + vfg.imageTable.m_values[i];
+                base64imgs.push(obj)
+            }
+
+            //load based64 images and run the `setup` function when it's done
+            loader
+                .add(base64imgs)
+                .on("progress", loadProgressHandler)
+                .load(setup);
+
+
+
+
+            //This `setup` function will run when the image has loaded
+            function setup() {
+                console.log("All files loaded");
+
+                currentScene = 0
+                endScene = vfg.visualStages.length;
+                sprites = vfg.visualStages[currentScene].visualSprites
+
+                for (var i = 0; i < sprites.length; i++) {
+
+                    if (sprites[i].showname) {
+                        textureName = sprites[i].prefabimage
+                        //Create the cat sprite
+                        var t = resources[textureName].texture;
+                        t.rotate = 8
+                        var spriteObj = new Sprite(t);
+                        spriteObj.name = sprites[i].name;
+                        spriteObj.position.set(0, 0);
+                        spriteObj.width = (sprites[i].maxX - sprites[i].minX) * width;
+                        spriteObj.height = (sprites[i].maxY - sprites[i].minY) * height;
+                        spriteObj.tint = RGBAToHexA(sprites[i].color.r, sprites[i].color.g, sprites[i].color.b, sprites[i].color.a);
+
+                        var sprintText = new PIXI.Text(sprites[i].name, { fontFamily: 'Arial', fontSize: 20, fill: 0x000000 });
+                        sprintText.texture.rotate = 8;
+                        sprintText.name = sprites[i].name + "Text";
+                        sprintText.anchor.set(0.5, 0.5);
+                        sprintText.position.set(spriteObj.width / 2, spriteObj.height / 2);
+                        spritWithText = new PIXI.Container();
+                        spritWithText.addChild(spriteObj);
+                        spritWithText.addChild(sprintText);
+                        spritWithText.position.set(sprites[i].minX * width, sprites[i].minY * width);
+                        spritWithText.name = spriteObj.name;
+
+                        if ('rotate' in sprites[i]) {
+                            spritWithText.anchor.set(0.5, 0.5);
+                            spritWithText.rotation = sprites[i].rotate * Math.PI / 180;
+                            spritWithText.position.set(sprites[i].minX * width + (sprites[i].maxX - sprites[i].minX) * width / 2, sprites[i].minY * width);
+                        }
+
+
+                        spritWithText.zIndex = sprites[i].depth;
+                        app.stage.addChild(spritWithText);
+                    } else {
+                        textureName = sprites[i].prefabimage
+                        var t = resources[textureName].texture;
+                        t.rotate = 8
+                        var spriteObj = new Sprite(t);
+                        spriteObj.name = sprites[i].name;
+
+                        spriteObj.position.set(sprites[i].minX * width, sprites[i].minY * width);
+                        spriteObj.width = (sprites[i].maxX - sprites[i].minX) * width;
+                        spriteObj.height = (sprites[i].maxY - sprites[i].minY) * height;
+                        spriteObj.tint = RGBAToHexA(sprites[i].color.r, sprites[i].color.g, sprites[i].color.b, sprites[i].color.a);
+                        spriteObj.zIndex = sprites[i].depth;
+                        if ('rotate' in sprites[i]) {
+                            spriteObj.anchor.set(0.5, 0.5);
+                            spriteObj.rotation = sprites[i].rotate * Math.PI / 180;
+                            spriteObj.position.set(sprites[i].minX * width + (sprites[i].maxX - sprites[i].minX) * width / 2, sprites[i].minY * width);
+                        }
+
+                        app.stage.addChild(spriteObj);
+                    }
+
+                    app.stage.children.sort((itemA, itemB) => itemA.zIndex - itemB.zIndex);
+
+
+                }
+
+
+                //Capture the keyboard arrow keys
+                let left = keyboard("ArrowLeft"),
+                    right = keyboard("ArrowRight");
+                var updated = false;
+                //Left arrow key `press` method
+                left.press = () => {
+                    if (currentScene > 0 && updated === false) {
+                        currentScene = currentScene - 1;
+                        updated = true
+                    }
+
+                };
+                //Left arrow key `release` method
+                left.release = () => {
+                    updated = false;
+                };
+
+
+
+                //Right
+                right.press = () => {
+                    if (currentScene < endScene - 1 && updated === false) {
+                        currentScene = currentScene + 1;
+                        updated = true
+                    }
+
+                };
+                right.release = () => {
+                    updated = false;
+                };
+
+                //Set the game state
+                state = play;
+
+                //Start the game loop 
+                app.ticker.add(delta => gameLoop(delta));
+            }
+            function gameLoop(delta) {
+
+                //Update the current game state:
+                state(delta);
+            }
+
+            function play(delta) {
+
+                sprites = vfg.visualStages[currentScene].visualSprites
+
+                for (var i = 0; i < sprites.length; i++) {
+
+                    var spriteUpdate = app.stage.getChildByName(sprites[i].name);
+                    spriteUpdate.position.set(sprites[i].minX * width, sprites[i].minY * width);
+                    if ('rotate' in sprites[i]) {
+                        spriteUpdate.anchor.set(0.5, 0.5);
+                        spriteUpdate.rotation = sprites[i].rotate * Math.PI / 180;
+                        spriteUpdate.position.set(sprites[i].minX * width + (sprites[i].maxX - sprites[i].minX) * width / 2, sprites[i].minY * width);
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
