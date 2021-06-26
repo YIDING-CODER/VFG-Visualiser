@@ -10,7 +10,7 @@ http-server
 
 ## Update stage using keyboard
 
-* Previous - Arrow Left
+* Previous Stage - Arrow Left
 * Next Stage - Arrow Right
 
 ## Choose VFG File
