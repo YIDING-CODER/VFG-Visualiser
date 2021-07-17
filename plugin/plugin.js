@@ -1122,7 +1122,7 @@ var PLANIMATION_MODEL = `
         <a onclick="$('#planimationhelpModal').modal(true)">  more info  <span class="glyphicon glyphicon-question-sign" style="cursor: pointer; top:7px !important; left:7px;font-size:25px;"aria-hidden="true"></span></a>
     
       </div>
-      <div class="modal-body">
+      <div class="modal-body" style="display:inline-block">
         <form class="form-horizontal left" role="form">
           <div class="form-group">
             <label for="domainPlanimationSelection" class="col-sm-4 control-label">Domain</label>
@@ -1153,34 +1153,21 @@ var PLANIMATION_MODEL = `
 
 
         <div class="form-group" style="display:inline-block">
-            
-
-         
-
         <div id="plannerURLInput" class="input-group">
           <input type="radio" id="urlradio" name="planradio"  onchange="on_change(this)" checked style="display:flex;position:relative;top:-10px;margin-left:15px;margin-right:-10px;">
           <span class="input-group-addon" id="customPlannerLabel">Custom Planner URL</span>
           <input id="plannerPlanimationURL" type="text" class="form-control" aria-describedby="customPlannerLabel" placeholder="http://solver.planning.domains/solve">
         </div>
-
-<br/>
-            <div class="col-sm-4" style="margin-bottom:5px;">
-            <input type="radio" id="planradio" name="planradio" onchange="on_change(this)" style="margin-right:10px">
-            <label>Upload Plan</label>
-            </div>
-
-            <div class="col-sm-4" style="position:relative;top:-5px;left:-6px;">
-              <select id="planSelection" style="display:none" class="form-control file-selection">
-              </select>
-            </div>
+            
           
       </div>
       <br/>
 
-      <div class="modal-footer"  >
-        <a href="http://planimation.planning.domains/" style="float:left" target="_blank">Try Planimation Web App</a>
-        <button type="button" class="btn btn-default"  data-dismiss="modal">Cancel</button>
-      </div>
+
+    </div>
+    <div class="modal-footer"  >
+    <a href="http://planimation.planning.domains/" style="float:left" target="_blank">Try Planimation Web App</a>
+    <button type="button" class="btn btn-default"  data-dismiss="modal">Cancel</button>
     </div>
   </div>
 </div>
