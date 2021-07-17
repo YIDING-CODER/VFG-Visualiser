@@ -5,7 +5,11 @@ var root, d3, zoom, viewerWidth, viewerHeight;
 // Heuristic globals
 var hSim, svgID, heursvg, svgCount=1, actions, fluents, fluentPreconditions = {}, formattedActions, heurdata;
 
-
+// Planimation Global
+var app;
+var app_width;
+var app_height;
+var app_stage;
 
 function launchViz(){
     window.new_tab('Viz2.0', function(editor_name){
@@ -26,8 +30,12 @@ function launchViz(){
       '</div>' +
       '<node circle style ="fill:black;stroke:black;stroke-width:3px;></node circle>' +
       '<p id="hv-output"></p>');
+      initialisePlanimation(editor_name)
     });
     makeTree();
+
+    
+    
 }
 
 // Generates the SVG object, and loads the tree data into a d3 style tree
@@ -146,9 +154,20 @@ function convertNode(node) {
 
 function nodeSelected(d) {
     window.current_state_node = d;
-    $('#statename').text(d.data.name);
+    $('#statename').text(d.data.name+" - "+d.data.precondition);
     $('#statedetails').html('<pre style="text-align: left">'+d.data.strState.sort().join('\n')+'</pre>');
 }
+
+function getNodeActions(d){
+
+    if (d.data.name =="root"){
+        return ""
+    }
+    return  getNodeActions(d.parent) + "("+ d.data.precondition.replace(/[(),]/g, ' ').replace(/ +(?= )/g,'').trim()+")"
+
+}
+
+
 
 function nodeChildrenToggled(d, cb=null) {
     if (d3.event && d3.event.defaultPrevented) return;
@@ -234,7 +253,7 @@ function compute_plan() {
                               "problem": new_prob})})
             .done(function (res) {
                 if (res['status'] === 'ok') {
-                    toastr.success('Plan found!');
+                    // toastr.success('Plan found!');
                     var index = 0;
                     function _expand(cur_node) {
                         if (index < res.result.plan.length) {
@@ -262,6 +281,66 @@ function compute_plan() {
 // Single click on node: update the info shown for a node
 function click(d){
     nodeSelected(d);
+
+    var plan=getNodeActions(d);
+    var domText = window.ace.edit($('#domainPlanimationSelection').find(':selected').val()).getSession().getValue();
+    var probText = window.ace.edit($('#problemPlanimationSelection').find(':selected').val()).getSession().getValue();
+    var animateText = window.ace.edit($('#animateSelection').find(':selected').val()).getSession().getValue();
+    var formData = new FormData();
+    formData.append("domain", domText);
+    formData.append("problem", probText);
+    formData.append("animation", animateText);
+    formData.append("plan", plan);
+
+    const xhr = new XMLHttpRequest();
+    const url='https://planimation.planning.domains/upload/pddl';
+    xhr.open("Post", url);
+    xhr.send(
+        formData
+    );
+
+    xhr.onreadystatechange = (e) => {
+
+          if(xhr.readyState === XMLHttpRequest.DONE) {
+            var status = xhr.status;
+            if (status === 0 || (status >= 200 && status < 400)) {
+                var vfg=JSON.parse(xhr.responseText);
+                // toastr.success('Planimation Update found!');
+               
+                updatePlaimation(vfg,d.data.name);
+
+            }}}
+             
+    // $.ajax( {url: "https://planimation.planning.domains/upload/pddl",
+    // type: "POST",
+    // contentType: "multipart/form-data",
+    // data: formData})
+    //     .done(function (res) {
+    //         if (res['status'] === 'ok') {
+    //             toastr.success('Planimation Update found!');
+    //             console.log(res)
+    //             var vfg=JSON.parse(res.responseText);
+    //             console.log(vfg)
+    //             updatePlaimation(vfg,d.data.name);
+
+    //         } else {
+    //             toastr.error('Planimation failed.');
+    //         }
+    //     }
+    // );
+
+}
+
+function updatePlaimation(vfg,nodeName) {
+
+
+    if (nodeName != "root"){
+        app_stage = vfg.visualStages[vfg.visualStages.length-1].visualSprites;
+    }
+    else{
+        app_stage = vfg.visualStages[0].visualSprites;
+    }
+   
 }
 
 // Double click on node: expand/collapse children
@@ -1029,7 +1108,7 @@ function autoUpdate(graph, hAdd, hUpdate=true) {
 
 /*
 --------------------------------------------------------------------------------
-                                START OF Viz and Planimation File Choose
+                                START OF Viz and Planimation 
 --------------------------------------------------------------------------------
 */
 var PLANIMATION_MODEL = `
@@ -1169,7 +1248,7 @@ function choosePlanimationFiles(type) {
   
   
   
-  function on_change(event) {
+function on_change(event) {
     if (event.id == "planradio") {
       $('#planSelection').show();
     } else {
@@ -1177,6 +1256,318 @@ function choosePlanimationFiles(type) {
     }
   
   }
+
+
+function initialisePlanimation(editor_name){
+    console.log("Run Second")
+    var html = '';
+
+    html += `
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/5.1.3/pixi.min.js"></script>
+    <script type="text/javascript">
+        var domText = window.ace.edit($('#domainPlanimationSelection').find(':selected').val()).getSession().getValue();
+        var probText = window.ace.edit($('#problemPlanimationSelection').find(':selected').val()).getSession().getValue();
+        var animateText = window.ace.edit($('#animateSelection').find(':selected').val()).getSession().getValue();
+        var formData = new FormData();
+        formData.append("domain", domText);
+        formData.append("problem", probText);
+        formData.append("animation", animateText);
+        // formData.append("plan", plan);
+        const xhr = new XMLHttpRequest();
+        const url='https://planimation.planning.domains/upload/pddl';
+        xhr.open("Post", url);
+        xhr.send(
+            formData
+        );
+
+        xhr.onreadystatechange = (e) => {
+
+              if(xhr.readyState === XMLHttpRequest.DONE) {
+                var status = xhr.status;
+                if (status === 0 || (status >= 200 && status < 400)) {
+                  // The request has been completed successfully
+              // Set the canvas size
+            let width = 250, height = 250;
+            app_width=250, app_height=250
+            //Aliases
+            let Application = PIXI.Application,
+                loader = PIXI.loader,
+                resources = PIXI.loader.resources,
+                Sprite = PIXI.Sprite;
+
+            //Create a Pixi Application
+            app = new Application({
+                width: width,
+                height: height,
+                antialias: true,
+                transparent: true,
+                resolution: 1
+            }
+            );
+
+            // The following two line is to change the canvas origin from top left to bottom left.
+            app.stage.position.y = app.renderer.height / app.renderer.resolution;
+            app.stage.scale.y = -1;
+
+            //Add the canvas that Pixi automatically created for you to the HTML document
+          
+            document.getElementById("planimation").appendChild(app.view);
+      
+            var vfg=JSON.parse(xhr.responseText);
+            app_stage=vfg.visualStages[0].visualSprites;
+            // Code to get the image texture from VFG File
+            var base64imgs = []
+            for (var i = 0; i < vfg.imageTable.m_keys.length; i++) {
+                var obj = {}
+                obj.name = vfg.imageTable.m_keys[i];
+                obj.url = "data:image/png;base64," + vfg.imageTable.m_values[i];
+                base64imgs.push(obj)
+            }
+
+            //load based64 images and run the =setup function when it's done
+            loader
+                .add(base64imgs)
+                .on("progress", loadProgressHandler)
+                .load(setup);
+
+
+            //This setup function will run when the image has loaded
+            function setup() {
+                console.log("All files loaded");
+                currentStage = 0
+                entStage = vfg.visualStages.length;
+
+                // get all the sprites and it's attributes for the current stage.
+                sprites = vfg.visualStages[currentStage].visualSprites;
+
+                // Add all the sprites to the canvas
+                for (var i = 0; i < sprites.length; i++) {
+                    if (sprites[i].showname) {
+                        app.stage.addChild(getSpriteWithName(sprites[i]));
+                    } else {
+                        app.stage.addChild(getSprite(sprites[i]));
+                    }
+                    // sort the children based on their zIndex
+                    app.stage.children.sort((itemA, itemB) => itemA.zIndex - itemB.zIndex);
+
+                }
+
+                //Capture the keyboard arrow keys
+                let left = keyboard("ArrowLeft"),
+                    right = keyboard("ArrowRight");
+                var updated = false;
+
+                //Left arrow key press method
+                left.press = () => {
+                    if (currentStage > 0 && updated === false) {
+                        currentStage = currentStage - 1;
+                        updated = true
+                    }
+                };
+                //Left arrow key release method
+                left.release = () => {
+                    updated = false;
+                };
+                //Right
+                right.press = () => {
+                    if (currentStage < entStage - 1 && updated === false) {
+                        currentStage = currentStage + 1;
+                        updated = true
+                    }
+                };
+                right.release = () => {
+                    updated = false;
+                };
+
+            
+                //call update canvas 60 times per second
+                app.ticker.add(delta => updateCanvas(delta));
+
+            }
+
+            function getSprite(sprite) {
+              textureName = sprite.prefabimage
+              var spriteObj = new Sprite(resources[textureName].texture);
+              spriteObj.texture.rotate = 8
+              spriteObj.name = sprite.name;
+              spriteObj.position.set(sprite.minX * width, sprite.minY * width);
+              spriteObj.width = (sprite.maxX - sprite.minX) * width;
+              spriteObj.height = (sprite.maxY - sprite.minY) * height;
+              spriteObj.tint = RGBAToHexA(sprite.color.r, sprite.color.g, sprite.color.b, sprite.color.a);
+              spriteObj.zIndex = sprite.depth;
+              if ('rotate' in sprite) {
+                  spriteObj.anchor.set(0.5, 0.5);
+                  spriteObj.rotation = sprite.rotate * Math.PI / 180;
+                  spriteObj.position.set(sprite.minX * width + (sprite.maxX - sprite.minX) * width / 2, sprite.minY * width);
+              }
+              return spriteObj;
+
+          }
+          function getSpriteWithName(sprite) {
+              // get the image type, block,table,etc
+              textureName = sprite.prefabimage
+
+              // create sprite/object to display on the canvas, the location(local) is set to be the bottom left
+              var spriteObj = new Sprite(resources[textureName].texture);
+              spriteObj.texture.rotate = 8
+              spriteObj.name = sprite.name;
+              spriteObj.position.set(0, 0);
+              spriteObj.width = (sprite.maxX - sprite.minX) * width;
+              spriteObj.height = (sprite.maxY - sprite.minY) * height;
+              spriteObj.tint = RGBAToHexA(sprite.color.r, sprite.color.g, sprite.color.b, sprite.color.a);
+
+              // create text and put it in the middle of the object
+              var sprintText = new PIXI.Text(sprite.name, { fontFamily: 'Arial', fontSize: 20, fill: 0x000000 });
+              sprintText.texture.rotate = 8;
+              sprintText.name = sprite.name + "Text";
+              sprintText.anchor.set(0.5, 0.5);
+              sprintText.position.set(spriteObj.width / 2, spriteObj.height / 2);
+
+              // Combine the sprite/object and text as a new object, and set the location(global)
+              spritWithText = new PIXI.Container();
+              spritWithText.addChild(spriteObj);
+              spritWithText.addChild(sprintText);
+              spritWithText.position.set(sprite.minX * width, sprite.minY * width);
+              spritWithText.name = spriteObj.name;
+              if ('rotate' in sprite) {
+                  updateRotateSprite(spritWithText,sprite);
+              }
+              spritWithText.zIndex = sprite.depth;
+              return spritWithText;
+          }
+
+          function updateCanvas(delta) {
+
+              //Update the current game state:
+              play(delta);
+          }
+
+          // Update the scene based on the new stage information
+          function play(delta) {
+
+              sprites = app_stage
+
+              for (var i = 0; i < sprites.length; i++) {
+                  // get the previous loaded sprite
+                  var spriteUpdate = app.stage.getChildByName(sprites[i].name);
+                  // Update the sprite location with new position
+                  spriteUpdate.position.set(sprites[i].minX * width, sprites[i].minY * width);
+
+                  // Update the sprite with rotate value
+                  if ('rotate' in sprites[i]) {
+                      updateRotateSprite(spriteUpdate,sprites[i]);
+                  }
+              }
+          }
+          function updateRotateSprite(oldSprite,newSprite){
+              oldSprite.anchor.set(0.5, 0.5);
+              oldSprite.rotation = newSprite.rotate * Math.PI / 180;
+              oldSprite.position.set(newSprite.minX * width + (newSprite.maxX - newSprite.minX) * width / 2,newSprite.minY * width);
+          }
+
+          } else {
+            // Oh no! There has been an error with the request!
+          }
+        }
+        }
+
+
+        // Progress function, we may use it in future
+        function loadProgressHandler(loader, resource) {
+
+//Display the file url currently being loaded
+console.log("loading: " + resource.url);
+
+//Display the percentage of files currently loaded
+console.log("progress: " + loader.progress + "%");
+
+//If you gave your files names as the first argument 
+//of the add method, you can access them like this
+//console.log("loading: " + resource.name);
+}
+
+// Copied from online, used for tracking key board event.
+function keyboard(value) {
+let key = {};
+key.value = value;
+key.isDown = false;
+key.isUp = true;
+key.press = undefined;
+key.release = undefined;
+//The downHandler
+key.downHandler = event => {
+    if (event.key === key.value) {
+        if (key.isUp && key.press) key.press();
+        key.isDown = true;
+        key.isUp = false;
+        event.preventDefault();
+    }
+};
+
+//The upHandler
+key.upHandler = event => {
+    if (event.key === key.value) {
+        if (key.isDown && key.release) key.release();
+        key.isDown = false;
+        key.isUp = true;
+        event.preventDefault();
+    }
+};
+
+//Attach event listeners
+const downListener = key.downHandler.bind(key);
+const upListener = key.upHandler.bind(key);
+
+window.addEventListener(
+    "keydown", downListener, false
+);
+window.addEventListener(
+    "keyup", upListener, false
+);
+
+// Detach event listeners
+key.unsubscribe = () => {
+    window.removeEventListener("keydown", downListener);
+    window.removeEventListener("keyup", upListener);
+};
+
+return key;
+}
+
+// Convert RGBA color to hex value
+function RGBAToHexA(r, g, b, a) {
+r = Math.round(r * 255).toString(16);
+g = Math.round(g * 255).toString(16);
+b = Math.round(b * 255).toString(16);
+a = Math.round(a * 255).toString(16);
+
+if (r.length == 1)
+    r = "0" + r;
+if (g.length == 1)
+    g = "0" + g;
+if (b.length == 1)
+    b = "0" + b;
+if (a.length == 1)
+    a = "0" + a;
+
+return "0x" + r + g + b;
+}
+
+    </script>
+       `
+    // Pixi code
+
+    $("#"+editor_name).append(html);
+
+
+}
+/*
+--------------------------------------------------------------------------------
+                                Finish OF Viz and Planimation 
+--------------------------------------------------------------------------------
+*/
+
+
 
 // Called when you click 'Go' on the file chooser
 function loadStatespace() {
