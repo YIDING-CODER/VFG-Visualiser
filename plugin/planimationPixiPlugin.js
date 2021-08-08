@@ -120,26 +120,6 @@ var PLANIMATION_MODEL = `
 var iframe_id = ''
 var iframe_counter = 0
 
-// function to load files into independent iframe
-// function loadFileUnity(){
-//           var planimation_iframe=document.getElementById(iframe_id.toString());
-//           var domText = window.ace.edit($('#domainPlanimationSelection').find(':selected').val()).getSession().getValue();
-//           var probText = window.ace.edit($('#problemPlanimationSelection').find(':selected').val()).getSession().getValue();
-//           var animateText = window.ace.edit($('#animateSelection').find(':selected').val()).getSession().getValue();
-//           var planSelected=document.getElementById("planradio").checked;
-//           if (planSelected){
-//           var planText = window.ace.edit($('#planSelection').find(':selected').val()).getSession().getValue();
-//           if (planText.length<2){
-//             planText=" "
-//           }
-//           }else{
-//             planText=" ";
-//           }
-//           var message={"domText":domText,"probText":probText,"animateText":animateText,"planText":planText,"solverURL": window.planimationURL};
-
-//           planimation_iframe.contentWindow.postMessage(message,"*");
-//           window.toastr.success("Start Planimation!");
-//       }
 
 // function to run animation of resultant output in iframe
 function runPlanimation() {
