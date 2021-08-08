@@ -90,10 +90,9 @@ function loadStatespacePlanimation() {
 
 // initialise the planimation pixi library
 function initialisePlanimation(domainPDDL,problemPDDL,animationPDDL){
-        require(["http://127.0.0.1:8080/plugin/planimationPixi.js"], function(Planimation) {
+        require(["https://cdn.jsdelivr.net/gh/YIDING-CODER/VFG-Visualiser/plugin/planimationPixi.js"], function(Planimation) {
             planimation=new Planimation(domainPDDL,problemPDDL,animationPDDL,250,250);
             document.getElementById("planimation").appendChild(planimation.getView()); 
-            planimation.initialise()
             document.getElementById("statespace").getElementsByTagName("svg")[0].style.height = "300px";
 });
 }
@@ -138,9 +137,7 @@ function click(d){
     // used to seperate root node and other node
     var nodeName=d.data.name;
     if (typeof planimation !== 'undefined'){
-        console.log(planimation);
-        planimation.updateWithPlan(plan,nodeName);
-        console.log("updated")
+        planimation.updateWithPlan(plan,nodeName=="root");
     }
 }
 
@@ -217,6 +214,7 @@ function chooseVizPlanimationFiles(type) {
 
 define(function () {
     window.planimationSolverStyled = false;
+
   return {
         name: "Heuristic Viz with Planimation",
         author: "Caitlin Aspinall, Cam Cunningham & Ellie Sekine",
@@ -224,6 +222,7 @@ define(function () {
         description: "Heuristic Visualization with Planimation",
         initialize: function() {
 
+       
         // Adds menu button that allows for choosing files
         window.remove_menu_button("heurVizMenuItem");
         window.add_menu_button('vizPlanimation', 'vizPlanimationMenuItem', 'glyphicon-tower',"chooseVizPlanimationFiles('vizPlanimation')");
@@ -265,5 +264,6 @@ define(function () {
           window.toastr.warning("Plug in loaded")
         }
   };
+
 });
 

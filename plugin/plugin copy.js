@@ -1,6 +1,5 @@
-http://editor.planning.domains/#edit_session=zb52MjA1tP6WDDx
-
-
+http://editor.planning.domains/#edit_session=jouVtVZV4JbtQPO
+https://cdn.jsdelivr.net/gh/YIDING-CODER/VFG-Visualiser/plugin/plugin.js
 // Tree Globals
 var stateCounter, graph, treemap, svg, duration, treeData, treeHeight, goTree = true, heurMax = 0;
 var root, d3, zoom, viewerWidth, viewerHeight;

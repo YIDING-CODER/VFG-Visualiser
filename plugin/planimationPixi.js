@@ -1,4 +1,4 @@
- define(["../pixi.min.js"], function() {
+ define(["https://cdnjs.cloudflare.com/ajax/libs/pixi.js/5.1.3/pixi.min.js"], function() {
     "use strict";
     let Application = PIXI.Application,
     loader = PIXI.loader,
@@ -27,15 +27,15 @@
         // The following two line is to change the canvas origin from top left to bottom left.
         this.app.stage.position.y = this.app.renderer.height / this.app.renderer.resolution;
         this.app.stage.scale.y = -1;
-        
+        initialise(this)
   
     }
 
-    function initialise(){
+    function initialise(planimation){
         var formData = new FormData();
-        formData.append("domain", this.domainPDDL);
-        formData.append("problem", this.problemPDDL);
-        formData.append("animation", this.animationPDDL);
+        formData.append("domain", planimation.domainPDDL);
+        formData.append("problem", planimation.problemPDDL);
+        formData.append("animation", planimation.animationPDDL);
         const xhr = new XMLHttpRequest();
         const url='https://planimation.planning.domains/upload/pddl';
         xhr.open("Post", url);
@@ -50,7 +50,7 @@
                 if (status === 0 || (status >= 200 && status < 400)) {
                     
                     var vfg=JSON.parse(xhr.responseText);
-                    this.appStage=vfg.visualStages[0].visualSprites;
+                    planimation.appStage=vfg.visualStages[0].visualSprites;
                     var base64imgs = []
                     for (var i = 0; i < vfg.imageTable.m_keys.length; i++) {
                         var obj = {}
@@ -68,7 +68,7 @@
                     loader
                         .add(base64imgs)
                         .on("progress", loadProgressHandler)
-                        .load(()=>setup(this));
+                        .load(()=>setup(planimation));
                     
                      //This setup function will run when the image has loaded
 
@@ -80,8 +80,6 @@
               }
             
             }
-
-
 
     }
     function setup(planimation) {
@@ -215,7 +213,7 @@
         }
 
         
-        function updateWithPlan(plan,nodeName) {
+        function updateWithPlan(plan,rootNode) {
             var formData = new FormData();
             formData.append("domain", this.domainPDDL);
             formData.append("problem", this.problemPDDL);
@@ -237,7 +235,7 @@
                         var vfg=JSON.parse(xhr.responseText);
                         // toastr.success('Planimation Update found!');
                        
-                        if (nodeName != "root"){
+                        if (!rootNode){
                             this.appStage = vfg.visualStages[vfg.visualStages.length-1].visualSprites;
                         }
                         else{
@@ -256,7 +254,6 @@
         getView: function(){
             return this.app.view;
         },
-        initialise:initialise,
         updateWithPlan:updateWithPlan
 
        
