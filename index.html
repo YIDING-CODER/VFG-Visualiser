@@ -3,14 +3,11 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Hello World</title>
+    <title>Planimation Demo</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
-    <!-- <script defer type="module" src="plugin/planimationPixi.js"></script> -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/5.1.3/pixi.min.js"></script> -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script>
 
-let domainPDDL=`(define (domain blocksworld)
+        let domainPDDL = `(define (domain blocksworld)
 
 (:requirements :strips)
 
@@ -98,13 +95,13 @@ let domainPDDL=`(define (domain blocksworld)
 
                          (not (on ?x ?y)))))`
 
-                         let problemPDDL=`(define (problem blocksworld-10-0)
+        let problemPDDL = `(define (problem blocksworld-10-0)
 (:domain blocksworld)
 (:objects d a h g b j e i f c )
 (:init (clear c) (clear f) (ontable i) (ontable f) (on c e) (on e j) (on j b)
 (on b g) (on g h) (on h a) (on a d) (on d i) (arm-free))
 (:goal (and (on d c) (on c f) (on f j) (on j e) (on e h) (on h b) (on b a) (on a g) (on g i))))`
-let animationPDDL=`(define (animation blocksworld)
+        let animationPDDL = `(define (animation blocksworld)
 
 ; Defines the Animation profile for BlocksWorld
 ; See worked example in AP Guide.md for more comments.
@@ -148,7 +145,7 @@ let animationPDDL=`(define (animation blocksworld)
             :type default
             :properties(
               (prefabImage img-block)
-              (showName False)
+              (showName True)
               (x Null)
               (y Null)
               (color RANDOMCOLOR)
@@ -196,23 +193,20 @@ let animationPDDL=`(define (animation blocksworld)
 )`
 
 
-    window.onload = function(){  
+        window.onload = function () {
+            require(["plugin/planimationPixi.js"], function (Planimation) {
+                planimation = new Planimation(domainPDDL, problemPDDL, animationPDDL, 500, 500);
+                document.getElementById("planimation").appendChild(planimation.getView());
+            });
 
+        }
 
-        require(["plugin/planimationPixi.js"], function(Planimation) {
-            planimation=new Planimation(domainPDDL,problemPDDL,animationPDDL,500,500);
-            document.getElementById("planimation").appendChild(planimation.getView()); 
-            planimation.initialise()
-});
-       
-    }
-        
     </script>
 
 </head>
 
 <body>
-   <div id="planimation"></div>
+    <div id="planimation"></div>
 </body>
 
 </html>
